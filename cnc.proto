@@ -1,0 +1,64 @@
+//CNC Device Communication Protocol Proposal Draft
+//GPL 2.0 and 3.0 Copyright 2010 Rob Gilson
+//See http://code.google.com/apis/protocolbuffers/docs/overview.html for syntax
+
+//Please fork and edit me brutally and report back with the battle report ::)
+
+//CNC Device Input Messages
+//==========================
+
+//Stores a series of gcodes to the CNC device so that it can be played back later.
+message StoreGCode {
+  optional bool append = 1 [default = false]; // true => append to previously stored gcode; false => overwrite previously stored gcode
+  repeated GCode g_code = 2;
+}
+
+//Runs the Gcode previously stored on the CNC Device (see StoreGCode). The stored GCode is not deleted in this operation.
+message RunStoredGCode {
+}
+
+//Runs one or more lines of GCode.
+message RunGCode {
+  repeated GCode g_code = 1;
+}
+
+//Describes a single GCode line.
+message GCode {
+  // code = letter value * 2^16  + code number
+  // Example 1: G92 => ( G = 0 ) * 2^16 + ( 92 ) = 92
+  // Example 2: M104 => ( M = 1 ) * 2^16 + ( 104 ) = 65 640
+  // This allows for fast + easy integer encoding and binary decoding
+  required int32 code = 1;
+  repeated AxisValue axis_value = 2; // each axis for example G1 X10.0 => new AxisValue(Axis.X, 10.0)
+  // TODO: checksum = ?
+  optional int checksum = 0; // checksum validation is optional
+}
+
+//An axis, value pair used in transmitting GCodes (ie. a gcode component such a F3000 or X10).
+message AxisValue {
+  required Axis axis = 1;
+  requires double value = 2;
+  enum Axis
+  {
+    X = 0;
+    Y = 1;
+    Z = 2;
+    F = 3;
+    S = 10;
+    E = 20;
+  }
+}
+
+//TODO: message for listing all machine information keys. (assuming a key/value store style access for machine data)
+
+//TODO: message for specifically requesting cnc machine information (such as makerbot style machine names, etc.)
+
+//TODO: message for setting cnc machine information (such as makerbot style machine names, etc.)
+
+//CNC Device Output Messages
+//==========================
+
+//TODO: response message for receiving success/failure of GCode operations.
+
+//TODO: message for receiving machine information (such as extruder temperature, machine name, etc.). These should be possible to be received asynchronously of any GCode operation.
+
